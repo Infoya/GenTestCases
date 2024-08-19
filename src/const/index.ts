@@ -1,0 +1,7 @@
+export enum TYPES_PAGES {
+  BA = "BA",
+  TEST_CASE = "TEST_CASE",
+  TEST_SCENARIO = "TEST_SCENARIO",
+}
+
+export const TEST_ATTACHMENT_ALLOWED = [TYPES_PAGES.BA];
