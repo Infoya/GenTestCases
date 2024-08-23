@@ -1,19 +1,17 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { PaperClipIcon } from '@heroicons/react/outline'; // Example icon for the attach button
-import { TEST_ATTACHMENT_ALLOWED } from '../../const';
-
-// Initialize the array with allowed types
+import { TEST_ATTACHMENT_ALLOWED, TYPES_PAGES } from '../../const';
 const TYPE_ALLOWED_ATTACHMENT: string[] = TEST_ATTACHMENT_ALLOWED; // Example values
 
 const ChatInput: React.FC = () => {
   const [userInput, setUserInput] = useState<string>('');
   const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
-
+  const inputRef = useRef<HTMLInputElement>(null);
+  
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
-
-  const type = queryParams.get('type');
+  const type = queryParams.get('tab');
 
   const sendMessage = () => {
     if (userInput.trim() !== '' || attachedFiles.length > 0) {
@@ -24,9 +22,16 @@ const ChatInput: React.FC = () => {
     }
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      setAttachedFiles([...attachedFiles, ...Array.from(e.target.files)]);
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement> | React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    if (e.type === 'drop') {
+      const droppedFiles = (e as React.DragEvent<HTMLDivElement>).dataTransfer.files;
+      setAttachedFiles([...attachedFiles, ...Array.from(droppedFiles)]);
+    } else if (e.target && (e.target as HTMLInputElement).files) {
+      const selectedFiles = (e.target as HTMLInputElement).files;
+      if (selectedFiles) {
+        setAttachedFiles([...attachedFiles, ...Array.from(selectedFiles)]);
+      }
     }
   };
 
@@ -34,17 +39,38 @@ const ChatInput: React.FC = () => {
     setAttachedFiles(attachedFiles.filter((_, i) => i !== index));
   };
 
+  const handlePaste = (e: React.ClipboardEvent<HTMLDivElement>) => {
+    const items = Array.from(e.clipboardData.items);
+    const files: File[] = items
+      .filter(item => item.kind === 'file')
+      .map(item => item.getAsFile())
+      .filter((file): file is File => file !== null); // This ensures TypeScript knows the file is not null
+  
+    if (files.length > 0) {
+      setAttachedFiles([...attachedFiles, ...files]);
+    }
+  };
+
   return (
-    <div className="p-4 border-t flex flex-col">
+    <div
+      className="p-4 border-t flex flex-col"
+      onDragOver={(e) => e.preventDefault()}
+      onDrop={handleFileChange}
+      onPaste={handlePaste}
+    >
       <div className="flex items-center mb-2">
-        <button className="p-2 hover:bg-gray-200 rounded-l-lg transition-colors duration-200">
-          {TYPE_ALLOWED_ATTACHMENT.includes(type || '') ? (
+        <button
+          className="p-2 hover:bg-gray-200 rounded-l-lg transition-colors duration-200"
+          onClick={() => inputRef.current?.click()}
+        >
+          {TYPE_ALLOWED_ATTACHMENT.includes(type || TYPES_PAGES.EMPTY) ? (
             <label htmlFor="file-upload" className="cursor-pointer">
               <PaperClipIcon className="h-6 w-6 text-gray-600" />
             </label>
           ) : null}
           <input
             id="file-upload"
+            ref={inputRef}
             type="file"
             multiple
             className="hidden"
