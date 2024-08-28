@@ -1,0 +1,6 @@
+/* Disabled button styles */
+.button:disabled {
+  background-color: #cccccc !important; /* Gray effect */
+  color: #666666; /* Text color for disabled state */
+  cursor: not-allowed;
+}

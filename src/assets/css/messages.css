@@ -1,0 +1,39 @@
+.markdown-body pre {
+  padding: 16px 16px 25px 16px;
+  border-radius: 8px;
+}
+
+.markdown-body code {
+  padding: 2px 4px;
+  border-radius: 4px;
+  font-family: "Courier New", Courier, monospace;
+  text-wrap: balance;
+}
+
+.markdown-body ol {
+  line-height: 30px;
+}
+
+.markdown-body p {
+  line-height: 30px;
+}
+
+/* styles.css or your main CSS file */
+
+@keyframes pulse {
+  0% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.5;
+  }
+}
+
+.loading-text {
+  animation: pulse 1.5s infinite;
+  color: #666666;
+  font-style: italic;
+}

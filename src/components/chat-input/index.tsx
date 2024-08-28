@@ -1,31 +1,51 @@
-import React, { useState, useRef } from 'react';
-import { useLocation } from 'react-router-dom';
-import { PaperClipIcon } from '@heroicons/react/outline'; // Example icon for the attach button
-import { TEST_ATTACHMENT_ALLOWED, TYPES_PAGES } from '../../const';
-const TYPE_ALLOWED_ATTACHMENT: string[] = TEST_ATTACHMENT_ALLOWED; // Example values
+import React, { useState, useRef } from "react";
+import { useLocation } from "react-router-dom";
+import { PaperClipIcon } from "@heroicons/react/outline";
+import CircularProgress from "@mui/material/CircularProgress";
+import { TEST_ATTACHMENT_ALLOWED, TYPES_PAGES } from "../../const";
+import useDetectEnterKey from "../../hooks/useDetectEnterKey";
 
-const ChatInput: React.FC = () => {
-  const [userInput, setUserInput] = useState<string>('');
+const TYPE_ALLOWED_ATTACHMENT: string[] = TEST_ATTACHMENT_ALLOWED;
+
+interface ChatInputProps {
+  onSendMessage: (messageText: string, attachments: File[]) => void; // Prop to handle sending messages
+  downloadHistory: () => void;
+  isSendEnable?: boolean;
+  isLoading?: boolean;
+}
+
+const ChatInput: React.FC<ChatInputProps> = ({
+  onSendMessage,
+  downloadHistory,
+  isSendEnable,
+  isLoading,
+}) => {
+  const [userInput, setUserInput] = useState<string>("");
   const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
-  
+
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
-  const type = queryParams.get('tab');
+  const type = queryParams.get("tab");
 
-  const sendMessage = () => {
-    if (userInput.trim() !== '' || attachedFiles.length > 0) {
-      console.log('User input:', userInput);
-      console.log('Attached files:', attachedFiles);
-      setUserInput('');
-      setAttachedFiles([]);
+  const handleSendMessage = () => {
+    if (userInput.trim() !== "" || attachedFiles.length > 0) {
+      onSendMessage(userInput, attachedFiles); // Call the onSendMessage prop with the user's input
+      setUserInput(""); // Clear input after sending the message
+      setAttachedFiles([]); // Clear attached files after sending the message
+      if (inputRef.current) {
+        inputRef.current.value = ""; // Reset the file input value to allow re-selection of files
+      }
     }
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement> | React.DragEvent<HTMLDivElement>) => {
+  const handleFileChange = (
+    e: React.ChangeEvent<HTMLInputElement> | React.DragEvent<HTMLDivElement>
+  ) => {
     e.preventDefault();
-    if (e.type === 'drop') {
-      const droppedFiles = (e as React.DragEvent<HTMLDivElement>).dataTransfer.files;
+    if (e.type === "drop") {
+      const droppedFiles = (e as React.DragEvent<HTMLDivElement>).dataTransfer
+        .files;
       setAttachedFiles([...attachedFiles, ...Array.from(droppedFiles)]);
     } else if (e.target && (e.target as HTMLInputElement).files) {
       const selectedFiles = (e.target as HTMLInputElement).files;
@@ -42,14 +62,17 @@ const ChatInput: React.FC = () => {
   const handlePaste = (e: React.ClipboardEvent<HTMLDivElement>) => {
     const items = Array.from(e.clipboardData.items);
     const files: File[] = items
-      .filter(item => item.kind === 'file')
-      .map(item => item.getAsFile())
+      .filter((item) => item.kind === "file")
+      .map((item) => item.getAsFile())
       .filter((file): file is File => file !== null); // This ensures TypeScript knows the file is not null
-  
+
     if (files.length > 0) {
       setAttachedFiles([...attachedFiles, ...files]);
     }
   };
+
+  // Custom hooks
+  useDetectEnterKey(handleSendMessage);
 
   return (
     <div
@@ -59,37 +82,42 @@ const ChatInput: React.FC = () => {
       onPaste={handlePaste}
     >
       <div className="flex items-center mb-2">
-        <button
-          className="p-2 hover:bg-gray-200 rounded-l-lg transition-colors duration-200"
-          onClick={() => inputRef.current?.click()}
-        >
-          {TYPE_ALLOWED_ATTACHMENT.includes(type || TYPES_PAGES.EMPTY) ? (
-            <label htmlFor="file-upload" className="cursor-pointer">
-              <PaperClipIcon className="h-6 w-6 text-gray-600" />
-            </label>
-          ) : null}
-          <input
-            id="file-upload"
-            ref={inputRef}
-            type="file"
-            multiple
-            className="hidden"
-            onChange={handleFileChange}
-          />
-        </button>
+        {TYPE_ALLOWED_ATTACHMENT.includes(type || TYPES_PAGES.EMPTY) && (
+          <button
+            className="p-2 hover:bg-gray-200 rounded-l-lg transition-colors duration-200"
+            onClick={() => inputRef.current?.click()}
+          >
+            <PaperClipIcon className="h-6 w-6 text-gray-600" />
+          </button>
+        )}
         <input
+          id="file-upload"
+          ref={inputRef}
+          type="file"
+          multiple
+          className="hidden"
+          onChange={handleFileChange}
+        />
+        <input
+          disabled={!isSendEnable || isLoading}
           value={userInput}
           onChange={(e) => setUserInput(e.target.value)}
-          onKeyUp={(e) => e.key === 'Enter' && sendMessage()}
+          onKeyUp={(e) => e.key === "Enter" && handleSendMessage()}
           className="w-full p-2 border rounded-r-lg"
           placeholder="Type your message here..."
         />
-        <button
-          onClick={sendMessage}
-          className="bg-[#f96304] text-white p-2 rounded-lg ml-2 hover:bg-[#e55204] transition-colors duration-200"
-        >
-          Send
-        </button>
+        {isSendEnable && !isLoading ? (
+          <>
+            <button
+              onClick={handleSendMessage}
+              className="bg-[#f96304] text-white p-2 rounded-lg ml-2 hover:bg-[#e55204] transition-colors duration-200"
+            >
+              Send
+            </button>
+          </>
+        ) : null}
+
+        {isLoading ? <CircularProgress className="p-2" /> : null}
       </div>
 
       {/* File Preview Section */}
@@ -98,7 +126,7 @@ const ChatInput: React.FC = () => {
           {attachedFiles.map((file, index) => (
             <div key={index} className="flex flex-col items-center">
               <div className="relative">
-                {file.type.startsWith('image/') ? (
+                {file.type.startsWith("image/") ? (
                   <img
                     src={URL.createObjectURL(file)}
                     alt={file.name}
@@ -116,7 +144,9 @@ const ChatInput: React.FC = () => {
                   ×
                 </button>
               </div>
-              <span className="text-xs text-gray-500 mt-1 truncate max-w-[4rem]">{file.name}</span>
+              <span className="text-xs text-gray-500 mt-1 truncate max-w-[4rem]">
+                {file.name}
+              </span>
             </div>
           ))}
         </div>

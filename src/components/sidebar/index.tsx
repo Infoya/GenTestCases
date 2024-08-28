@@ -42,7 +42,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange }) => {
           <li>
             <a href="#" className="flex items-center p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors duration-200 truncate">
               <ChatIcon className="h-6 w-6 mr-2 text-[#f96304] flex-shrink-0" />
-              User Creates the Reserva
+              New Chat
             </a>
           </li>
         </ul>
