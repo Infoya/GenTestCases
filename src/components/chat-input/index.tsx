@@ -98,13 +98,14 @@ const ChatInput: React.FC<ChatInputProps> = ({
           className="hidden"
           onChange={handleFileChange}
         />
-        <input
+        <textarea
           disabled={!isSendEnable || isLoading}
           value={userInput}
           onChange={(e) => setUserInput(e.target.value)}
           onKeyUp={(e) => e.key === "Enter" && handleSendMessage()}
-          className="w-full p-2 border rounded-r-lg"
+          className="w-full p-2 border border-[#f96304] rounded-lg bg-[#d4d4d4]"
           placeholder="Type your message here..."
+          rows={5}
         />
         {isSendEnable && !isLoading ? (
           <>
