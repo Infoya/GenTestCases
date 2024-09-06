@@ -31,8 +31,8 @@ const ChatMessageList: React.FC<Message> = ({
             <div
               className={`inline-block p-2 rounded-lg max-w-[900px] ${
                 message.sender === "user"
-                  ? "bg-[#f96304] text-white"
-                  : "bg-gray-300 text-black"
+                  ? "bg-[#d4d4d4] text-black"
+                  : "bg-white text-black"
               } ${isLoading ? "loading-text leading-9" : ""}`} // Apply loading-text class if isLoading is true
             >
               {message.sender === "bot" ? (
