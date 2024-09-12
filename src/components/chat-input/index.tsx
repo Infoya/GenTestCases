@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { PaperClipIcon } from "@heroicons/react/outline";
 import CircularProgress from "@mui/material/CircularProgress";
@@ -23,10 +23,24 @@ const ChatInput: React.FC<ChatInputProps> = ({
   const [userInput, setUserInput] = useState<string>("");
   const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
   const type = queryParams.get("tab");
+
+  // Resize the textarea dynamically as the user types
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = "auto"; // Reset height to auto to measure scrollHeight properly
+      textareaRef.current.style.overflowY =
+        textareaRef.current.scrollHeight > 90 ? "scroll" : "hidden"; // Show scroll if text exceeds 3 lines (90px)
+      textareaRef.current.style.height = `${Math.min(
+        textareaRef.current.scrollHeight,
+        90 // Max height for 3 lines
+      )}px`;
+    }
+  }, [userInput]); // Trigger the resize effect whenever the input changes
 
   const handleSendMessage = () => {
     if (userInput.trim() !== "" || attachedFiles.length > 0) {
@@ -99,13 +113,17 @@ const ChatInput: React.FC<ChatInputProps> = ({
           onChange={handleFileChange}
         />
         <textarea
+          ref={textareaRef}
           disabled={!isSendEnable || isLoading}
           value={userInput}
           onChange={(e) => setUserInput(e.target.value)}
-          onKeyUp={(e) => e.key === "Enter" && handleSendMessage()}
-          className="w-full p-2 border border-[#f96304] rounded-lg bg-[#d4d4d4]"
+          onKeyUp={(e) =>
+            e.key === "Enter" && !e.shiftKey && handleSendMessage()
+          }
+          rows={1} // Start with 1 row
+          className="w-full p-2 border rounded-lg resize-none overflow-hidden" // Disable manual resizing
           placeholder="Type your message here..."
-          rows={5}
+          style={{ maxHeight: "90px" }} // Max height for 3 lines
         />
         {isSendEnable && !isLoading ? (
           <>
